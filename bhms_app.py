@@ -101,6 +101,8 @@ def tab1():
             conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
             curr = conn.cursor()
             curr.execute("delete from rooms where `room_id`=%s", room_id.get())
+            curr.execute("delete from tenants where `room_id`=%s", room_id.get())
+            
             conn.commit()
             conn.close()
             fetch_student_database()
@@ -292,8 +294,8 @@ def tab1():
             else:
                 conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
                 curr = conn.cursor()
-                curr.execute("INSERT INTO tenants VALUES (%s,%s,%s,%s,%s,%s)",
-                            (tenant_id.get(), room_id.get(), name.get(), gender.get(), age.get(), contact.get(), amt_paid.get))
+                curr.execute("INSERT INTO tenants VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                            (room_id.get(), tenant_id.get(), name.get(), gender.get(), age.get(), contact.get(), amt_paid.get()))
                 conn.commit()
                 conn.close()
 
@@ -327,7 +329,13 @@ def tab1():
     def delete_tenants():
         conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
         curr = conn.cursor()
+        curr.execute("SELECT room_id FROM tenants WHERE tenant_id = %s", (tenant_id,))
+        rm_id = curr.fetchone()
+        rm_id = (rm_id[0] if rm_id else "")
+
         curr.execute("delete from tenants where `tenant_id`=%s", tenant_id.get())
+        #curr.execute("update rooms set `capacity` = `capacity` - 1 where `room_id` = %s", rm_id)
+        
         conn.commit()
         conn.close()
         fetch_data()
