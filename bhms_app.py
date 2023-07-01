@@ -30,6 +30,7 @@ def tab1():
         room_id = tk.StringVar()
         capacity = tk.StringVar()
         rent = tk.StringVar()
+        eConsumption = tk.StringVar()
         eBill = tk.StringVar()
 
 
@@ -47,11 +48,16 @@ def tab1():
         rent_lb.grid(row=2, column=0, padx=2, pady=2)
         rent_inp = tk.Entry(detail_frame2, bd=7, font=("Arial", 15), textvariable=rent)
         rent_inp.grid(row=2, column=1, padx=2, pady=2)
+
+        energy_consumption_lb = tk.Label(detail_frame2, text="Energy \n Consumption", font=("Arial", 15))
+        energy_consumption_lb.grid(row=3, column=0, padx=2, pady=2)
+        energy_consumption_inp = tk.Entry(detail_frame2, bd=7, font=("Arial", 15), textvariable=eConsumption)
+        energy_consumption_inp.grid(row=3, column=1, padx=2, pady=2)
         
         eBill_lb = tk.Label(detail_frame2, text="Electric Bill", font=("Arial", 14))
-        eBill_lb.grid(row=3, column=0, padx=2, pady=2)
+        eBill_lb.grid(row=4, column=0, padx=2, pady=2)
         eBill_inp = tk.Entry(detail_frame2, bd=7, font=("Arial", 15), textvariable=eBill)
-        eBill_inp.grid(row=3, column=1, padx=2, pady=2)
+        eBill_inp.grid(row=4, column=1, padx=2, pady=2)
 
         def fetch_student_database():
             conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
@@ -67,13 +73,13 @@ def tab1():
 
         def add_room():
             try:
-                if room_id.get() == "" or capacity.get() == "" or rent.get() == "" or eBill.get() == "":
-                    messagebox.showerror("Error!", "Please fill al the fields!")
+                if room_id.get() == "" or capacity.get() == "" or rent.get() == "":
+                    messagebox.showerror("Error!", "Please fill all the fields!")
                 else:
                     conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
                     curr = conn.cursor()
-                    curr.execute("INSERT INTO rooms VALUES (%s,%s,%s,%s)",
-                                (room_id.get(), capacity.get(), rent.get(), eBill.get()))
+                    curr.execute("INSERT INTO rooms VALUES (%s,%s,%s,%s,%s)",
+                                (room_id.get(), capacity.get(), rent.get(), eConsumption.get(), eBill.get()))
                     conn.commit()
                     conn.close()
 
@@ -89,12 +95,14 @@ def tab1():
             room_id.set(row[0])
             capacity.set(row[1])
             rent.set(row[2])
-            eBill.set(row[3])
+            eConsumption.set(row[3])
+            eBill.set(row[4])
 
         def clear_room():
             room_id.set("")
             capacity.set("")
             rent.set("")
+            eConsumption.set("")
             eBill.set("")
 
         def delete_room():
@@ -105,15 +113,21 @@ def tab1():
             
             conn.commit()
             conn.close()
+            clear_room()         
+            update_room()   
+            refresh_frame()
             fetch_student_database()
-            clear_room()
+
 
         def update_room():
             try:
                 conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
                 curr = conn.cursor()
-                curr.execute("update rooms set `capacity`=%s, `rent`=%s, `elec_bill`=%s where `room_id`=%s",
-                            (capacity.get(), rent.get(), eBill.get(), room_id.get()))
+                item = course_table.focus()    
+                values = course_table.item(item)['values']
+                cc = values[0]                
+                curr.execute("update rooms set `room_id`=%s, `capacity`=%s, `rent`=%s, `energy_consumption`= %s, `elec_bill`=%s where `room_id`=%s",
+                            (room_id.get(), capacity.get(), rent.get(), eConsumption.get(), eBill.get(), cc))
                 conn.commit()
                 conn.close()
                 fetch_student_database()
@@ -131,6 +145,7 @@ def tab1():
                 room_id.set(row[0])
                 capacity.set(row[1])
                 rent.set(row[2])
+                eConsumption.set(row[3])
                 eBill.set(row[3])
 
                 conn.commit()
@@ -168,7 +183,7 @@ def tab1():
         y_scroll2 = tk.Scrollbar(main_frame2, orient=tk.VERTICAL)
         x_scroll2 = tk.Scrollbar(main_frame2, orient=tk.HORIZONTAL)
 
-        course_table = ttk.Treeview(main_frame2, columns=("Room ID", "Capacity", "Rent", "Electric Bill"),
+        course_table = ttk.Treeview(main_frame2, columns=("Room ID", "Capacity", "Rent", "Energy Consumption", "Electric Bill"),
                                     yscrollcommand=y_scroll2.set, xscrollcommand=x_scroll2.set)
 
         y_scroll2.config(command=course_table.yview)
@@ -180,6 +195,7 @@ def tab1():
         course_table.heading("Room ID", text="Room ID")
         course_table.heading("Capacity", text="Capacity")
         course_table.heading("Rent", text="Rent")
+        course_table.heading("Energy Consumption", text="Energy Consumption")
         course_table.heading("Electric Bill", text="Electric Bill")
 
         course_table['show'] = 'headings'
@@ -187,6 +203,7 @@ def tab1():
         course_table.column("Room ID", width=100)
         course_table.column("Capacity", width=100)
         course_table.column("Rent", width=100)
+        course_table.column("Energy Consumption", width=100)
         course_table.column("Electric Bill", width=100)
 
         course_table.pack(fill=tk.BOTH, expand=True)
@@ -203,6 +220,22 @@ def tab1():
             search_frame2.destroy()
             data_frame2.destroy()
             tab1()
+        
+        def refresh_frame():
+            conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
+            cursor = conn.cursor()
+
+            # Clear existing data
+            course_table.delete(*course_table.get_children())
+
+            # Fetch data from the database
+            cursor.execute('SELECT * FROM rooms')        
+            rows = cursor.fetchall()
+
+            # Insert fetched data into the treeview
+            for row in rows:
+                course_table.insert('', tk.END, values=row)  
+
 
         button2 = Button(root, text='TENANT', font=('Times_New_Roman', 15), command=back)
         button2.pack(side=BOTTOM)
@@ -226,6 +259,7 @@ def tab1():
     age = tk.StringVar()
     gender = tk.StringVar()
     amt_paid = tk.StringVar()
+    pd_date = tk.StringVar()
 
     # ===== Entry =====#
 
@@ -271,6 +305,11 @@ def tab1():
     amt_paid_inp = tk.Entry(detail_frame, bd=7, font=("Arial", 15), textvariable=amt_paid)
     amt_paid_inp.grid(row=6, column=1, padx=2, pady=2)
 
+    pd_data_lb = tk.Label(detail_frame, text="Paid Date", font=("Arial", 15))
+    pd_data_lb.grid(row=7, column=0, padx=2, pady=2)
+    pd_data_inp = tk.Entry(detail_frame, bd=7, font=("Arial", 15), textvariable=pd_date)
+    pd_data_inp.grid(row=7, column=1, padx=2, pady=2)
+
     # ================#
 
     # ===== Functions =====#
@@ -288,20 +327,20 @@ def tab1():
         conn.close()
 
     def add_tenant():
-        try:
-            if tenant_id.get() == "" or room_id.get() == "" or name.get() == "" or contact.get() == "" or age.get() == "" or gender.get() == "":
-                messagebox.showerror("Error!", "Please fill al the fields!")
-            else:
-                conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
-                curr = conn.cursor()
-                curr.execute("INSERT INTO tenants VALUES (%s,%s,%s,%s,%s,%s,%s)",
-                            (room_id.get(), tenant_id.get(), name.get(), gender.get(), age.get(), contact.get(), amt_paid.get()))
-                conn.commit()
-                conn.close()
+        # try:
+        if tenant_id.get() == "" or room_id.get() == "" or name.get() == "" or contact.get() == "" or age.get() == "" or gender.get() == "":
+            messagebox.showerror("Error!", "Please fill al the fields!")
+        else:
+            conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
+            curr = conn.cursor()
+            curr.execute("INSERT INTO tenants VALUES (%s,%s,%s,%s,%s,%s,%s, %s)",
+                        (room_id.get(), tenant_id.get(), name.get(), gender.get(), age.get(), contact.get(), amt_paid.get(), pd_date.get()))
+            conn.commit()
+            conn.close()
 
-                fetch_data()
-        except:
-            messagebox.showerror("Error!", "Tenant already exists!")
+            fetch_data()
+        # except:
+        #     messagebox.showerror("Error!", "Tenant already exists!")
 
     def get_cursor(event):
         ''' This function will fetch data of the selected row'''
@@ -309,13 +348,14 @@ def tab1():
         cursor_row = student_table.focus()
         content = student_table.item(cursor_row)
         row = content['values']
-        tenant_id.set(row[0])
-        room_id.set(row[1])
+        room_id.set(row[0])
+        tenant_id.set(row[1])
         name.set(row[2])
-        age.set(row[3])
-        gender.set(row[4])
+        gender.set(row[3])        
+        age.set(row[4])
         contact.set(row[5])
         amt_paid.set(row[6])
+        pd_date.set(row[7])
 
     def clear_tenants():
         tenant_id.set("")
@@ -325,13 +365,14 @@ def tab1():
         gender.set("")
         contact.set("")
         amt_paid.set("")
+        pd_date.set("")
 
     def delete_tenants():
         conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
         curr = conn.cursor()
-        curr.execute("SELECT room_id FROM tenants WHERE tenant_id = %s", (tenant_id,))
-        rm_id = curr.fetchone()
-        rm_id = (rm_id[0] if rm_id else "")
+        #curr.execute("SELECT tenant_id FROM tenants WHERE tenant_id = %s", (tenant_id,))
+        # tt_id = curr.fetchone()
+        # tt_id = (tt_id[1] if tt_id else "")
 
         curr.execute("delete from tenants where `tenant_id`=%s", tenant_id.get())
         #curr.execute("update rooms set `capacity` = `capacity` - 1 where `room_id` = %s", rm_id)
@@ -339,20 +380,24 @@ def tab1():
         conn.commit()
         conn.close()
         fetch_data()
+        refresh_stud_frame()
         clear_tenants()
 
     def update_tenants():
-        try:
-            conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
-            curr = conn.cursor()
-            curr.execute("update tenants set `tenant_id` = %s, `room_id` = %s, `tenant_ame`=%s,`gender`=%s, `age`=%s, `contact`=%s where `tenant_id`=%s",
-                        (tenant_id.get(), room_id.get(), name.get(), gender.get(), age.get(), contact.get(), amt_paid.get(), tenant_id.get()))
-            conn.commit()
-            conn.close()
-            fetch_data()
-            clear_tenants()
-        except:
-            messagebox.showerror("Error!", "Tenant already exists!")
+        
+        conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
+        curr = conn.cursor()
+        item = student_table.focus()    
+        values = student_table.item(item)['values']
+        cc = values[1]
+
+        curr.execute("update tenants set `tenant_id` = %s, `room_id` = %s, `tenant_name`=%s,`gender`=%s, `age`=%s, `contact`=%s, `amount_paid` = %s, `paid_date` = %s where `tenant_id`=%s",
+                    (room_id.get(), tenant_id.get(), name.get(), gender.get(), age.get(), contact.get(), amt_paid.get(), pd_date.get(), cc))
+        conn.commit()
+        conn.close()
+        fetch_data()
+        refresh_stud_frame()
+        clear_tenants()
 
     def search_tenants():
         try:
@@ -361,19 +406,30 @@ def tab1():
             curr.execute("select * from tenants where `tenant_id`=%s", tenant_id.get())
             row = curr.fetchone()
 
-            tenant_id.set(row[0])
-            room_id.set(row[1])
+            room_id.set(row[0])
+            tenant_id.set(row[1])
             name.set(row[2])
             age.set(row[3])
             gender.set(row[4])
             contact.set(row[5])
             amt_paid.set(row[6])
+            pd_date.set(row[6])
 
             conn.commit()
 
         except:
             tkinter.messagebox.showinfo("data entry form", "No student found")
             clear_tenants()
+            conn.close()
+        
+    def refresh_stud_frame():
+            conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
+            cursor1 = conn.cursor()
+            cursor1.execute("SELECT * FROM tenants")
+            rows = cursor1.fetchall()
+            for row in rows:
+                student_table.insert('', tk.END, values=row)
+
             conn.close()
 
     # ================#
@@ -415,7 +471,7 @@ def tab1():
     y_scroll = tk.Scrollbar(main_frame, orient=tk.VERTICAL)
     x_scroll = tk.Scrollbar(main_frame, orient=tk.HORIZONTAL)
 
-    student_table = ttk.Treeview(main_frame, columns=("Tenant ID", "Room ID", "Name", "Gender", "Age", "Contact", "Amount Paid"),
+    student_table = ttk.Treeview(main_frame, columns=("Room ID","Tenant ID", "Name", "Gender", "Age", "Contact", "Amount Paid", "Paid Date"),
                                  yscrollcommand=y_scroll.set, xscrollcommand=x_scroll.set)
 
     y_scroll.config(command=student_table.yview)
@@ -424,24 +480,26 @@ def tab1():
     y_scroll.pack(side=tk.RIGHT, fill=tk.Y)
     x_scroll.pack(side=tk.BOTTOM, fill=tk.X)
 
-    student_table.heading("Tenant ID", text="Tenant ID")
     student_table.heading("Room ID", text="Room ID")  
+    student_table.heading("Tenant ID", text="Tenant ID")
     student_table.heading("Name", text="Name")
     student_table.heading("Gender", text="Gender")
     student_table.heading("Age", text="Age")
     student_table.heading("Contact", text="Contact")
     student_table.heading("Amount Paid", text="Amount Paid")
+    student_table.heading("Paid Date", text="Paid Date")
 
 
     student_table['show'] = 'headings'
 
-    student_table.column("Tenant ID", width=100)
     student_table.column("Room ID", width=100)
+    student_table.column("Tenant ID", width=100)
     student_table.column("Name", width=100)
     student_table.column("Gender", width=100)
     student_table.column("Age", width=100)
     student_table.column("Contact", width=100)
     student_table.column("Amount Paid", width=100)
+    student_table.column("Paid Date", width=100)
         
     student_table.pack(fill=tk.BOTH, expand=True)
 
