@@ -39,6 +39,7 @@ def tab1():
         room_id = tk.StringVar()
         capacity = tk.StringVar()
         rent = tk.StringVar()
+        search2 = tk.StringVar()
 
 
         cCode_lb = tk.Label(detail_frame2, text="Room ID", font=("Arial", 15))
@@ -133,7 +134,7 @@ def tab1():
             try:
                 conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
                 curr = conn.cursor()
-                curr.execute("select * from rooms where `room_id`=%s", room_id.get())
+                curr.execute("select * from rooms where `room_id`=%s", search2.get())
                 row = curr.fetchone()
 
                 room_id.set(row[0])
@@ -164,10 +165,12 @@ def tab1():
 
         search_frame2 = tk.Frame(data_frame2, relief=tk.GROOVE)
         search_frame2.pack(anchor=tk.SE)
-
+        
         search_btn2 = tk.Button(search_frame2, text="Search", font=("Arial", 13), bd=9, width=14,
                                 command=search_room)
         search_btn2.grid(row=0, column=2, padx=12, pady=2)
+        search_inp = tk.Entry(search_frame2, bd=7, font=("Arial", 15), textvariable=search2)
+        search_inp.grid(row=0, column=1, padx=12, pady=2)        
 
         main_frame2 = tk.Frame(data_frame2, bd=11, relief=tk.GROOVE)
         main_frame2.pack(fill=tk.BOTH, expand=True)
@@ -275,6 +278,7 @@ def tab1():
         paid_date = tk.StringVar()
         room_id3 = tk.StringVar()
         tenant_id3 = tk.StringVar()
+        search3 = tk.StringVar()
 
 
         today = datetime.now()
@@ -398,10 +402,7 @@ def tab1():
             try:
                 conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
                 curr = conn.cursor()
-                item = payment_table.focus()    
-                values = payment_table.item(item)['values']
-                cc = values[0] 
-                curr.execute("select * from payments where `payment_id`=%s", cc)
+                curr.execute("select * from payments where `payment_id`=%s", search3.get())
                 row = curr.fetchone()
 
                 # payment_id.set(row[0])
@@ -413,7 +414,7 @@ def tab1():
                 conn.commit()
 
             except:
-                tkinter.messagebox.showinfo("data entry form", "No Course Found")
+                tkinter.messagebox.showinfo("data entry form", "No Payment Record Found")
                 clear_payment()
                 conn.close()
         
@@ -436,8 +437,10 @@ def tab1():
         search_frame3 = tk.Frame(data_frame3, relief=tk.GROOVE)
         search_frame3.pack(anchor=tk.SE)
 
-        search_btn3 = tk.Button(search_frame3, text="Search", font=("Arial", 13), bd=9, width=14)
+        search_btn3 = tk.Button(search_frame3, text="Search", font=("Arial", 13), bd=9, width=14, command=search_payment)
         search_btn3.grid(row=0, column=2, padx=12, pady=2)
+        search_inp = tk.Entry(search_frame3, bd=7, font=("Arial", 15), textvariable=search3)
+        search_inp.grid(row=0, column=1, padx=12, pady=2)          
 
         main_frame3 = tk.Frame(data_frame3, bd=11, relief=tk.GROOVE)
         main_frame3.pack(fill=tk.BOTH, expand=True)
@@ -537,6 +540,7 @@ def tab1():
         consumption_date = tk.StringVar()
         room_id4 = tk.StringVar()
         tenant_id4 = tk.StringVar()
+        search4 = tk.StringVar()
 
 
         # cCode_lb = tk.Label(detail_frame4, text="Consumption \n ID", font=("Arial", 15))
@@ -644,11 +648,8 @@ def tab1():
         def search_energy():
             try:
                 conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
-                curr = conn.cursor()
-                item = energy_table.focus()    
-                values = energy_table.item(item)['values']
-                cc = values[0] 
-                curr.execute("select * from payments where `payment_id`=%s", cc)
+                curr = conn.cursor()        
+                curr.execute("select * from payments where `consumption_id`=%s", search4.get())
                 row = curr.fetchone()
 
                 consumption_id.set(row[0])
@@ -660,7 +661,7 @@ def tab1():
                 conn.commit()
 
             except:
-                tkinter.messagebox.showinfo("data entry form", "No Course Found")
+                tkinter.messagebox.showinfo("data entry form", "No Energy Record Found")
                 clear_energy()
                 conn.close()        
 
@@ -683,8 +684,10 @@ def tab1():
         search_frame4 = tk.Frame(data_frame4, relief=tk.GROOVE)
         search_frame4.pack(anchor=tk.SE)
 
-        search_btn4 = tk.Button(search_frame4, text="Search", font=("Arial", 13), bd=9, width=14)
+        search_btn4 = tk.Button(search_frame4, text="Search", font=("Arial", 13), bd=9, width=14, command=search_energy)
         search_btn4.grid(row=0, column=2, padx=12, pady=2)
+        search_inp = tk.Entry(search_frame4, bd=7, font=("Arial", 15), textvariable=search4)
+        search_inp.grid(row=0, column=1, padx=12, pady=2)          
 
         main_frame4 = tk.Frame(data_frame4, bd=11, relief=tk.GROOVE)
         main_frame4.pack(fill=tk.BOTH, expand=True)
@@ -763,6 +766,7 @@ def tab1():
     contact = tk.StringVar()
     age = tk.StringVar()
     gender = tk.StringVar()
+    search = tk.StringVar()
 
 
     # ===== Entry =====#
@@ -906,11 +910,8 @@ def tab1():
     def search_tenants():
         try:
             conn = pymysql.connect(host="localhost", user="root", password="Dytuanhanz15", database="bhms")
-            curr = conn.cursor()
-            item = student_table.focus()    
-            values = student_table.item(item)['values']
-            cc = values[1]            
-            curr.execute("select * from tenants where `tenant_id`=%s", cc)
+            curr = conn.cursor()    
+            curr.execute("select * from tenants where `tenant_id`=%s", search.get())
             row = curr.fetchone()
 
             room_id.set(row[0])
@@ -968,6 +969,8 @@ def tab1():
 
     search_btn = tk.Button(search_frame, text="Search", font=("Arial", 13), bd=9, width=14, command=search_tenants)
     search_btn.grid(row=0, column=2, padx=12, pady=2)
+    search_inp = tk.Entry(search_frame, bd=7, font=("Arial", 15), textvariable=search)
+    search_inp.grid(row=0, column=1, padx=12, pady=2)      
 
     # ================#
 
